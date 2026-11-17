@@ -42,6 +42,7 @@ GerenciamentoVeiculos/
   Models/Veiculo.cs                # Codigo, Marca, Modelo, Placa, AnoFabricacao
 database/gerenciamento_veiculos.sql  # cria DB gerenciamento_veiculos + tabela veiculo + 3 exemplos (idempotente)
 docs/RUNBOOK.md                    # passo a passo + roteiro de testes CRUD (11 casos)
+README.md                          # apresentação do projeto (resumo); detalhes ficam no RUNBOOK
 ```
 
 ## Convenções e decisões
