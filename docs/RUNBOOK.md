@@ -1,150 +1,143 @@
-# Runbook – Vehicle Management System (C# + SQL Server)
+# Runbook – Sistema de Gerenciamento de Veículos (C# + SQL Server)
 
-Console application that performs the four CRUD operations (Create, Read, Update, Delete) on vehicles
-(make, model, license plate and year of manufacture), stored in SQL Server.
+Aplicação console que realiza as quatro operações de CRUD (Cadastrar, Listar, Editar e Excluir)
+de veículos — marca, modelo, placa e ano de fabricação — armazenados no SQL Server.
 
-## 1. Project structure
+## 1. Estrutura do projeto
 
 ```
-VehicleManagement/
-├── VehicleManagement.sln
+vehicle-management/
+├── GerenciamentoVeiculos.sln             <- solução (abrir no Visual Studio)
+├── GerenciamentoVeiculos/
+│   ├── GerenciamentoVeiculos.csproj
+│   ├── Program.cs                        <- menu e operações do CRUD
+│   ├── Data/
+│   │   ├── Conexao.cs                    <- string de conexão com o SQL Server
+│   │   └── VeiculoRepository.cs          <- comandos SQL (INSERT, SELECT, UPDATE, DELETE)
+│   └── Models/
+│       └── Veiculo.cs                    <- classe que representa o veículo
 ├── database/
-│   └── Vehicles.sql                  <- creates the database, table and sample data
-├── docs/
-│   └── RUNBOOK.md                    <- this file
-└── src/VehicleManagement/
-    ├── VehicleManagement.csproj
-    ├── appsettings.json              <- connection string
-    ├── Program.cs                    <- entry point / connection check
-    ├── Models/Vehicle.cs             <- entity
-    ├── Data/VehicleRepository.cs     <- CRUD with SQL (parameterized queries)
-    └── UI/                           <- console menu and input validation
+│   └── gerenciamento_veiculos.sql        <- cria o banco, a tabela e dados de exemplo
+└── docs/
+    └── RUNBOOK.md                        <- este arquivo
 ```
 
-## 2. Prerequisites
+## 2. Pré-requisitos
 
-| Item | Version | Notes |
-|------|---------|-------|
-| .NET SDK | 10.0 or newer | Installed with Visual Studio 2026, or https://dotnet.microsoft.com/download – check with `dotnet --version` |
-| SQL Server | 2017 or newer | Express, Developer, LocalDB or a Docker container |
-| SQL client | any | SSMS, Azure Data Studio, VS Code (mssql extension) or `sqlcmd` |
-| Internet (first run only) | – | `dotnet restore` downloads the `Microsoft.Data.SqlClient` NuGet package |
+| Item | Versão | Observação |
+|------|--------|------------|
+| Visual Studio | 2026 | Workload **"Desenvolvimento para desktop com .NET"** (já inclui o .NET 10 SDK) |
+| .NET SDK | 10.0 ou superior | Só é necessário instalar à parte se for usar a linha de comando sem o Visual Studio – conferir com `dotnet --version` |
+| SQL Server | 2017 ou superior | Express (recomendado), Developer ou container Docker |
+| Cliente SQL | qualquer | SSMS, Azure Data Studio, extensão mssql do VS Code ou `sqlcmd` |
+| Internet (só na primeira execução) | – | Para baixar o pacote NuGet `Microsoft.Data.SqlClient` |
 
-## 3. Step by step
+## 3. Passo a passo
 
-### Step 1 – Extract the project
-Unzip the submitted `.zip` into any folder.
+### Passo 1 – Extrair o projeto
+Descompacte o arquivo `.zip` em qualquer pasta.
 
-### Step 2 – Make sure SQL Server is running
-Pick **one** of the options:
+### Passo 2 – Verificar se o SQL Server está em execução
+No Windows, abra `services.msc` e confirme que o serviço **SQL Server (SQLEXPRESS)** está *Em execução*.
 
-* **A) SQL Server installed on Windows (Express/Developer):** check that the *SQL Server (MSSQLSERVER)* or
-  *SQL Server (SQLEXPRESS)* service is running (`services.msc`).
-* **B) LocalDB (comes with Visual Studio):** nothing to start; use `(localdb)\MSSQLLocalDB` as the server.
-* **C) Docker (Windows, macOS or Linux):**
-  ```bash
-  docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=YourStrong!Passw0rd" \
-             -p 1433:1433 --name sqlserver -d mcr.microsoft.com/mssql/server:2022-CU15-ubuntu-22.04
-  ```
+> Usa a instância padrão (**SQL Server (MSSQLSERVER)**) ou Docker? Veja o Passo 4.
 
-### Step 3 – Create the database
-Run `database/Vehicles.sql` in your SQL client. The script is idempotent (it can be run again safely) and creates:
+### Passo 3 – Criar o banco de dados
+Execute o script `database/gerenciamento_veiculos.sql`. Ele pode ser executado mais de uma vez sem erro e cria:
 
-* database `VehicleManagementDB`
-* table `dbo.Vehicles` (`Id` identity PK, `Make`, `Model`, `LicensePlate` UNIQUE, `ManufactureYear` with a CHECK constraint)
-* 3 sample vehicles (only if the table is empty)
+* o banco `gerenciamento_veiculos`;
+* a tabela `veiculo` (`codigo` gerado automaticamente, `marca`, `modelo`, `placa` sem repetição e `ano_fabricacao` entre 1900 e 2100);
+* 3 veículos de exemplo (somente se a tabela estiver vazia).
 
-Using `sqlcmd` (examples):
+**Pelo SSMS:** conecte em `.\SQLEXPRESS` (Autenticação do Windows), abra o arquivo (*File → Open → File*) e pressione **Execute (F5)**.
+
+**Pelo `sqlcmd`** (a partir da pasta do projeto):
 ```bash
-# SQL Express instance, Windows authentication (default setup)
-sqlcmd -S .\SQLEXPRESS -E -i database/Vehicles.sql
-# Default instance (MSSQLSERVER), Windows authentication
-sqlcmd -S localhost -E -i database/Vehicles.sql
-# Docker / SQL authentication
-sqlcmd -S localhost,1433 -U sa -P "YourStrong!Passw0rd" -C -i database/Vehicles.sql
+sqlcmd -S .\SQLEXPRESS -E -i database\gerenciamento_veiculos.sql
 ```
-With SSMS / Azure Data Studio: open the file and press **Execute (F5)**.
+* `-S` servidor/instância · `-E` autenticação do Windows · `-i` arquivo de script a executar
 
-### Step 4 – Configure the connection string
-Edit `src/VehicleManagement/appsettings.json` and keep **only the line that matches your setup**:
+### Passo 4 – Conferir a string de conexão
+A conexão fica na classe `GerenciamentoVeiculos/Data/Conexao.cs`:
 
-```jsonc
-// SQL Server Express, Windows auth (default value - works as is)
-"VehicleDb": "Server=.\\SQLEXPRESS;Database=VehicleManagementDB;Integrated Security=True;TrustServerCertificate=True;"
-
-// Default instance (MSSQLSERVER), Windows auth
-"VehicleDb": "Server=localhost;Database=VehicleManagementDB;Integrated Security=True;TrustServerCertificate=True;"
-
-// LocalDB
-"VehicleDb": "Server=(localdb)\\MSSQLLocalDB;Database=VehicleManagementDB;Integrated Security=True;TrustServerCertificate=True;"
-
-// Docker / SQL authentication
-"VehicleDb": "Server=localhost,1433;Database=VehicleManagementDB;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
+```csharp
+private readonly string stringConexao =
+    @"Server=.\SQLEXPRESS;Database=gerenciamento_veiculos;Integrated Security=True;TrustServerCertificate=True;";
 ```
-Alternatively, without editing the file, set the environment variable `ConnectionStrings__VehicleDb`
-(e.g. PowerShell: `$env:ConnectionStrings__VehicleDb = "Server=...;..."`).
 
-### Step 5 – Build and run
-From the folder that contains `VehicleManagement.sln`:
+Com SQL Server Express e autenticação do Windows **não é preciso alterar nada**. Em outros cenários, troque
+apenas o início da string:
+
+| Cenário | String de conexão |
+|---------|-------------------|
+| SQL Server Express (padrão) | `Server=.\SQLEXPRESS;Database=gerenciamento_veiculos;Integrated Security=True;TrustServerCertificate=True;` |
+| Instância padrão (MSSQLSERVER) | `Server=localhost;Database=gerenciamento_veiculos;Integrated Security=True;TrustServerCertificate=True;` |
+| Docker / usuário e senha | `Server=localhost,1433;Database=gerenciamento_veiculos;User Id=sa;Password=SuaSenha!123;TrustServerCertificate=True;` |
+
+### Passo 5 – Executar a aplicação
+**Visual Studio:** abra `GerenciamentoVeiculos.sln` e pressione **F5** (ou *Ctrl+F5* para executar sem depuração).
+
+**Linha de comando** (na pasta onde está o `.sln`):
 ```bash
-dotnet restore
-dotnet build
-dotnet run --project src/VehicleManagement
-```
-(Or open `VehicleManagement.sln` in Visual Studio / Rider and press **F5**.)
-
-If the connection works you will see the main menu:
-
-```
-=====================================
-       VEHICLE MANAGEMENT SYSTEM
-=====================================
-1 - Register a vehicle   (Create)
-2 - List vehicles        (Read)
-3 - Edit a vehicle       (Update)
-4 - Delete a vehicle     (Delete)
-0 - Exit
+dotnet run --project GerenciamentoVeiculos
 ```
 
-## 4. Test plan (checks all CRUD operations)
+Se a conexão estiver correta, o menu principal será exibido:
 
-Start with the sample data loaded by the script (3 vehicles).
+```
+=========================================
+   SISTEMA DE GERENCIAMENTO DE VEÍCULOS
+=========================================
+1 - Cadastrar veículo
+2 - Listar veículos
+3 - Editar veículo
+4 - Excluir veículo
+0 - Sair
+```
 
-| # | Operation | Action | Expected result |
-|---|-----------|--------|-----------------|
-| 1 | **Read** | Option `2` | Table with the 3 sample vehicles and `Total: 3 vehicle(s).` |
-| 2 | **Create** | Option `1` → Make `Ford`, Model `Ka`, Plate `FOR1D99`, Year `2019` | `Vehicle registered successfully with Id 4.` |
-| 3 | **Read** | Option `2` | The new vehicle appears (4 rows) |
-| 4 | **Create (validation)** | Option `1` with the same plate `FOR1D99` | Error: plate already registered (no new row) |
-| 5 | **Create (validation)** | Option `1` with Year `1800` or `abc` | Message asking for a valid year; prompt repeats |
-| 6 | **Update** | Option `3` → Id `4` → ENTER on Make/Model/Plate, Year `2021` | `Vehicle updated successfully.` |
-| 7 | **Read** | Option `2` | Id 4 now shows year 2021 |
-| 8 | **Update (not found)** | Option `3` → Id `999` | `Vehicle not found.` |
-| 9 | **Delete** | Option `4` → Id `4` → `y` | `Vehicle deleted successfully.` |
-| 10 | **Read** | Option `2` | Back to 3 vehicles |
-| 11 | **Delete (cancel)** | Option `4` → Id `1` → `n` | `Operation cancelled.`; vehicle 1 still listed |
+## 4. Roteiro de testes (valida todas as operações do CRUD)
 
-You can also confirm the data directly in the database:
+Comece com o banco recém-criado pelo script (3 veículos de exemplo).
+
+| # | Operação | Ação | Resultado esperado |
+|---|----------|------|--------------------|
+| 1 | **Listar** | Opção `2` | Tabela com os 3 veículos de exemplo e `Total: 3 veículo(s).` |
+| 2 | **Cadastrar** | Opção `1` → Marca `Ford`, Modelo `Ka`, Placa `FOR1D99`, Ano `2019` | `Veículo cadastrado com sucesso! Código: 4` |
+| 3 | **Listar** | Opção `2` | O Ford Ka aparece na lista (4 veículos) |
+| 4 | **Cadastrar (placa repetida)** | Opção `1` → qualquer marca/modelo, Placa `for1d99`, Ano `2015` | `Erro: já existe um veículo cadastrado com esta placa.` (a placa é convertida para maiúsculas) |
+| 5 | **Cadastrar (ano inválido)** | Opção `1` → Marca `Fiat`, Modelo `Uno`, Placa `FIA2B33`, Ano `1800`, depois `abc`, depois `2015` | Para `1800` e `abc`: `Informe um ano válido...` e o ano é pedido novamente; com `2015` o veículo é cadastrado |
+| 6 | **Editar** | Opção `3` → Código `4` → ENTER em Marca, Modelo e Placa, Ano `2021` | `Veículo atualizado com sucesso!` |
+| 7 | **Listar** | Opção `2` | O código 4 agora mostra o ano 2021 |
+| 8 | **Editar (inexistente)** | Opção `3` → Código `999` | `Veículo não encontrado.` |
+| 9 | **Excluir** | Opção `4` → Código `4` → `s` | `Veículo excluído com sucesso!` |
+| 10 | **Excluir (cancelar)** | Opção `4` → Código `1` → `n` | `Operação cancelada.` |
+| 11 | **Listar** | Opção `2` | O Ford Ka (código 4) não aparece mais; o Toyota (código 1) continua na lista |
+
+> **Por que o Fiat do teste 5 recebeu o código 6 e não 5?** No SQL Server, a coluna `IDENTITY` consome o próximo
+> número mesmo quando o `INSERT` falha (como no teste 4, de placa repetida). Pular números é o comportamento normal.
+
+Também é possível conferir os dados direto no banco:
 ```sql
-USE VehicleManagementDB;
-SELECT * FROM dbo.Vehicles;
+USE gerenciamento_veiculos;
+SELECT * FROM veiculo;
 ```
 
-## 5. Troubleshooting
+## 5. Solução de problemas
 
-| Symptom | Likely cause / fix |
-|---------|--------------------|
-| `Could not connect to SQL Server / database` on start | SQL Server service not running, wrong server name in `appsettings.json`, or `Vehicles.sql` was not executed yet |
-| `Cannot open database "VehicleManagementDB"` | Run `database/Vehicles.sql` first (Step 3) |
-| `Login failed for user` | Wrong user/password, or SQL authentication not enabled (mixed mode) on the server |
-| Certificate / SSL error | Keep `TrustServerCertificate=True` in the connection string (development only) |
-| `dotnet: command not found` | Install the .NET 10 SDK (section 2) |
-| `Error: a vehicle with this license plate is already registered` | Expected: `LicensePlate` has a UNIQUE constraint |
+| Sintoma | Causa provável / solução |
+|---------|--------------------------|
+| `Não foi possível conectar ao banco de dados` ao iniciar | Serviço do SQL Server parado, nome do servidor errado em `Conexao.cs` ou o script do Passo 3 não foi executado |
+| `Cannot open database "gerenciamento_veiculos"` | Execute o script `database/gerenciamento_veiculos.sql` (Passo 3) |
+| `A network-related or instance-specific error...` | A instância informada em `Server=` não existe ou está parada. Confira o nome em `services.msc` (Passo 4) |
+| `Login failed for user` | Usuário/senha incorretos ou autenticação SQL não habilitada no servidor |
+| Erro de certificado / SSL | Mantenha `TrustServerCertificate=True` na string de conexão (apenas para ambiente de desenvolvimento) |
+| `Erro: já existe um veículo cadastrado com esta placa.` | Comportamento esperado: a coluna `placa` não permite repetição |
 
-## 6. Design notes
+## 6. Observações sobre a implementação
 
-* **ADO.NET with `Microsoft.Data.SqlClient`** – plain SQL, same approach as a classic class example, no ORM.
-* **Parameterized queries** everywhere, preventing SQL injection.
-* **Layers:** `Models` (data), `Data` (SQL access), `UI` (console), keeping the SQL out of the menu code.
-* **Validation** at two levels: in the console (required fields, lengths, year range) and in the database
-  (`NOT NULL`, `UNIQUE` plate, `CHECK` on the year).
+* **ADO.NET com `Microsoft.Data.SqlClient`**, seguindo o exemplo da aula: classe `Conexao` com `AbrirConexao()`
+  e a classe `VeiculoRepository` com os comandos SQL.
+* **Comandos parametrizados** (`@marca`, `@placa`...) em todas as operações, o que evita SQL Injection.
+* **Separação em pastas:** `Models` (dados), `Data` (acesso ao banco) e `Program.cs` (menu/console).
+* **Validação em dois níveis:** no console (campos obrigatórios, tamanho máximo, ano entre 1900 e o próximo ano,
+  placa só com letras, números e hífen) e no banco (`NOT NULL`, `UNIQUE` na placa e `CHECK` no ano).

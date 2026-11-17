@@ -5,21 +5,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>VehicleManagement</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
-    <!-- Transitive dependency of SqlClient pinned to a patched version:
-         7.1.1 pulls System.Security.Cryptography.Pkcs 9.0.18, affected by
-         CVE-2026-70162 and CVE-2026-84008 (NuGet warnings NU1902/NU1903). -->
+    <!-- Dependência indireta do SqlClient fixada em versão corrigida:
+         o SqlClient 7.1.1 traz o System.Security.Cryptography.Pkcs 9.0.18, que possui
+         vulnerabilidades conhecidas (CVE-2026-70162 e CVE-2026-84008, avisos NU1902/NU1903). -->
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.15" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
