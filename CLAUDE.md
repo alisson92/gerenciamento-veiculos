@@ -14,8 +14,10 @@ Entrega exigida (um `.zip`):
 > Mantenha esse padrão nos artefatos da entrega; as conversas comigo seguem em português.
 
 ## Stack
-- .NET 8 (`net8.0`), console app, `Nullable` e `ImplicitUsings` habilitados
-- ADO.NET puro com `Microsoft.Data.SqlClient` 5.2.2 — **sem ORM** (intencional, segue o padrão da aula)
+- .NET 10 (`net10.0`), console app, `Nullable` e `ImplicitUsings` habilitados
+- ADO.NET puro com `Microsoft.Data.SqlClient` 7.1.1 — **sem ORM** (intencional, segue o padrão da aula)
+- `System.Security.Cryptography.Pkcs` 10.0.15 fixado no `.csproj`: dependência transitiva do SqlClient 7.1.1
+  (que traria a 9.0.18, com CVE-2026-70162/84008). Ao atualizar o SqlClient, reavalie se o pin ainda é necessário.
 - SQL Server 2017+ (testado com `mcr.microsoft.com/mssql/server:2022-CU15-ubuntu-22.04`)
 
 ## Estrutura
@@ -53,16 +55,17 @@ docker cp database/Vehicles.sql vm-sql:/tmp/ && \
 docker exec vm-sql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test!Passw0rd123' -C -i /tmp/Vehicles.sql
 docker run -it --rm --network vm-test -v "$PWD":/src:ro \
   -e 'ConnectionStrings__VehicleDb=Server=vm-sql,1433;Database=VehicleManagementDB;User Id=sa;Password=Test!Passw0rd123;TrustServerCertificate=True;' \
-  mcr.microsoft.com/dotnet/sdk:8.0 bash -c 'cp -r /src /work && cd /work && dotnet run --project src/VehicleManagement'
+  mcr.microsoft.com/dotnet/sdk:10.0 bash -c 'mkdir /work && cp -r /src/src /src/VehicleManagement.sln /work/ && cd /work && dotnet run --project src/VehicleManagement'
 # limpeza
 docker rm -f vm-sql && docker network rm vm-test
 ```
-- Montar o projeto como `:ro` e copiar para `/work` evita poluir o repo com `bin/` e `obj/` criados como root.
+- Montar o projeto como `:ro` e copiar só `src/` + `.sln` para `/work` evita poluir o repo com `bin/`/`obj/` de root
+  e deixa de fora `reference-class-project/` (que tem outro `Program.cs` e quebraria o build).
 - Testes automatizados: alimentar o menu via stdin (`printf '%s\n' 2 "" 0 | docker run -i ...`).
 - Senha `Test!Passw0rd123` é **apenas para o container local descartável**.
 
 ## Status (2026-11-17)
-- Build: 0 warnings / 0 errors.
+- Build (.NET 10 SDK 10.0.404): 0 warnings / 0 errors; `dotnet list package --vulnerable` limpo.
 - Script SQL validado e idempotente (2ª execução não duplica dados).
 - Plano de testes do runbook (11 casos) executado com sucesso, incluindo duplicidade de placa,
   ano inválido, Id inexistente e cancelamento de exclusão.
@@ -72,11 +75,13 @@ docker rm -f vm-sql && docker network rm vm-test
 - GitHub: https://github.com/alisson92/vehicle-management (branch `main`, Conventional Commits)
 
 ## Decisões confirmadas pelo usuário
-- O professor testa no **Windows** e usou `Integrated Security=True` no projeto da aula → manter esse padrão no `appsettings.json`.
+- O professor testa no **Windows** com **Visual Studio 2026 / .NET 10** e **SQL Server Express** (`Server=.\SQLEXPRESS`,
+  `Integrated Security=True`), conforme o projeto da aula → o `appsettings.json` padrão segue exatamente isso.
 - Senha `sa` em texto puro no runbook é aceitável (contexto acadêmico) — não sinalizar novamente.
 
 ## Projeto de referência da aula
-- Pode ser colocado em `reference-class-project/` na raiz, apenas para comparação. A pasta está no `.gitignore`
+- Está em `reference-class-project/ProjetoBanco/` (cadastro de `Aluno`, só Create, classe `Conexao` com connection
+  string fixa, `net10.0`, `.slnx`, nomes em português), apenas para comparação. A pasta está no `.gitignore`
   e **não deve ser commitada nem entrar no `.zip`**.
 
 ## Pendências para a entrega

@@ -25,7 +25,7 @@ VehicleManagement/
 
 | Item | Version | Notes |
 |------|---------|-------|
-| .NET SDK | 8.0 or newer | https://dotnet.microsoft.com/download – check with `dotnet --version` |
+| .NET SDK | 10.0 or newer | Installed with Visual Studio 2026, or https://dotnet.microsoft.com/download – check with `dotnet --version` |
 | SQL Server | 2017 or newer | Express, Developer, LocalDB or a Docker container |
 | SQL client | any | SSMS, Azure Data Studio, VS Code (mssql extension) or `sqlcmd` |
 | Internet (first run only) | – | `dotnet restore` downloads the `Microsoft.Data.SqlClient` NuGet package |
@@ -56,10 +56,10 @@ Run `database/Vehicles.sql` in your SQL client. The script is idempotent (it can
 
 Using `sqlcmd` (examples):
 ```bash
-# Windows authentication, default instance
-sqlcmd -S localhost -E -i database/Vehicles.sql
-# SQL Express instance
+# SQL Express instance, Windows authentication (default setup)
 sqlcmd -S .\SQLEXPRESS -E -i database/Vehicles.sql
+# Default instance (MSSQLSERVER), Windows authentication
+sqlcmd -S localhost -E -i database/Vehicles.sql
 # Docker / SQL authentication
 sqlcmd -S localhost,1433 -U sa -P "YourStrong!Passw0rd" -C -i database/Vehicles.sql
 ```
@@ -69,11 +69,11 @@ With SSMS / Azure Data Studio: open the file and press **Execute (F5)**.
 Edit `src/VehicleManagement/appsettings.json` and keep **only the line that matches your setup**:
 
 ```jsonc
-// Windows auth, default instance (default value)
-"VehicleDb": "Server=localhost;Database=VehicleManagementDB;Integrated Security=True;TrustServerCertificate=True;"
-
-// SQL Server Express
+// SQL Server Express, Windows auth (default value - works as is)
 "VehicleDb": "Server=.\\SQLEXPRESS;Database=VehicleManagementDB;Integrated Security=True;TrustServerCertificate=True;"
+
+// Default instance (MSSQLSERVER), Windows auth
+"VehicleDb": "Server=localhost;Database=VehicleManagementDB;Integrated Security=True;TrustServerCertificate=True;"
 
 // LocalDB
 "VehicleDb": "Server=(localdb)\\MSSQLLocalDB;Database=VehicleManagementDB;Integrated Security=True;TrustServerCertificate=True;"
@@ -138,7 +138,7 @@ SELECT * FROM dbo.Vehicles;
 | `Cannot open database "VehicleManagementDB"` | Run `database/Vehicles.sql` first (Step 3) |
 | `Login failed for user` | Wrong user/password, or SQL authentication not enabled (mixed mode) on the server |
 | Certificate / SSL error | Keep `TrustServerCertificate=True` in the connection string (development only) |
-| `dotnet: command not found` | Install the .NET 8 SDK (section 2) |
+| `dotnet: command not found` | Install the .NET 10 SDK (section 2) |
 | `Error: a vehicle with this license plate is already registered` | Expected: `LicensePlate` has a UNIQUE constraint |
 
 ## 6. Design notes
