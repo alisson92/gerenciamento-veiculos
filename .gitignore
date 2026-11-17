@@ -1,0 +1,17 @@
+# Artefatos de build do .NET
+bin/
+obj/
+
+# Arquivos locais do Visual Studio / Rider
+.vs/
+.idea/
+*.user
+
+# Metadados do Windows gerados ao baixar arquivos (não fazem parte do projeto)
+*:Zone.Identifier
+
+# Memória local de sessão do Claude Code (não versionar)
+.remember/
+
+# Projeto de referência da aula, usado apenas para comparação local (não entregar)
+reference-class-project/
