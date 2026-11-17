@@ -68,8 +68,16 @@ docker rm -f vm-sql && docker network rm vm-test
   ano inválido, Id inexistente e cancelamento de exclusão.
 - Corrigido: loop infinito em EOF no stdin.
 
+## Repositório
+- GitHub: https://github.com/alisson92/vehicle-management (branch `main`, Conventional Commits)
+
+## Decisões confirmadas pelo usuário
+- O professor testa no **Windows** e usou `Integrated Security=True` no projeto da aula → manter esse padrão no `appsettings.json`.
+- Senha `sa` em texto puro no runbook é aceitável (contexto acadêmico) — não sinalizar novamente.
+
+## Projeto de referência da aula
+- Pode ser colocado em `reference-class-project/` na raiz, apenas para comparação. A pasta está no `.gitignore`
+  e **não deve ser commitada nem entrar no `.zip`**.
+
 ## Pendências para a entrega
-- Remover os arquivos `*:Zone.Identifier` (metadados do Windows gerados no download) antes de zipar.
-- Não incluir `bin/`, `obj/`, `.vs/` no `.zip`.
-- O `appsettings.json` padrão usa Windows Authentication (`Integrated Security=True`) — adequado para
-  o professor rodar no Windows; no Linux/Docker use autenticação SQL via variável de ambiente.
+- Não incluir `bin/`, `obj/`, `.vs/`, `.remember/` nem `reference-class-project/` no `.zip`.
