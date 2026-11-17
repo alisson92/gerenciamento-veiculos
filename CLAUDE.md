@@ -94,4 +94,6 @@ docker rm -f vm-sql && docker network rm vm-test
   A pasta está no `.gitignore` e **não deve ser commitada nem entrar no `.zip`**.
 
 ## Pendências para a entrega
-- Gerar o `.zip` com `git archive` (só arquivos versionados: sem `bin/`, `obj/`, `.vs/`, `.remember/`, `reference-class-project/`).
+- Gerar o `.zip` com `git archive --format=zip -o entrega.zip HEAD` (só arquivos versionados: sem `bin/`, `obj/`, `.vs/`,
+  `.remember/`, `reference-class-project/`). O `.gitattributes` marca `CLAUDE.md` e o próprio `.gitattributes` como
+  `export-ignore`, então eles ficam fora do `.zip`. Novo arquivo interno (não destinado ao professor)? Adicione-o lá.

@@ -1,0 +1,4 @@
+# Arquivos versionados no repositório, mas que NÃO entram no pacote de entrega.
+# O atributo export-ignore faz o "git archive" ignorá-los ao gerar o .zip.
+CLAUDE.md       export-ignore
+.gitattributes  export-ignore
