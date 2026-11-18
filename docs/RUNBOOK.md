@@ -6,7 +6,7 @@ de veículos — marca, modelo, placa e ano de fabricação — armazenados no S
 ## 1. Estrutura do projeto
 
 ```
-vehicle-management/
+gerenciamento-veiculos/
 ├── GerenciamentoVeiculos.sln             <- solução (abrir no Visual Studio)
 ├── GerenciamentoVeiculos/
 │   ├── GerenciamentoVeiculos.csproj
