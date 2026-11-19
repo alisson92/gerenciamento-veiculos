@@ -82,7 +82,7 @@ docker rm -f vm-sql && docker network rm vm-test
   `dotnet list package --vulnerable` limpo; script SQL idempotente; roteiro de 11 testes do runbook OK; EOF OK.
 
 ## Repositório
-- GitHub: https://github.com/alisson92/vehicle-management (branch `main`, Conventional Commits)
+- GitHub: https://github.com/alisson92/gerenciamento-veiculos (branch `main`, Conventional Commits)
 
 ## Decisões confirmadas pelo usuário
 - O professor testa no **Windows** com **Visual Studio 2026 / .NET 10** e **SQL Server Express** (`Server=.\SQLEXPRESS`,
